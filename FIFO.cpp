@@ -49,7 +49,7 @@ void draw_frames(vector<int> physical_memory) {
     for (int i = 0; i < n; ++i) {
         cout << "------+";
     }
-    cout << "\n         |";
+    cout << "\nPage no: |";
     for (int i = 0; i < n; ++i) {
         cout << "  " << setw(2) << physical_memory[i] << "  |";
     }
@@ -84,21 +84,21 @@ int main()
     vector<int> physical_memory(maximum_no_frame, -1);
     draw_frames(physical_memory);
 
-    cout << "Enter the length of reference string:\n";
-    cin >> n;
+    cout<<"BEGIN OF SIMULATION\n*NOTE: an input of -1 means quitting the program\n--------------------------------------------------------------------------------------------------------------\n\n";
+   
+    int page_id;
+    cout<<"Enter a page number process want to access: ";
+    cin>>page_id;
 
-    for (int i = 0; i < n; ++i)
+    while(page_id != -1)
     {
 
         // inputing processes request for a page.
-        int page_id;
-        cin >> page_id;
-        if(page_id > process.page_table.size()) {
+        if(page_id >= process.page_table.size()) {
             cout <<  "Invalid reference.\n";
-            --i;                                                   // get the reference again.
             draw_frames(physical_memory);
-            continue;
         }
+        else{
         // check if page is present inside of memory
         if (process.page_table[page_id].occupied)
         {
@@ -149,9 +149,14 @@ int main()
                 draw_frames(physical_memory);
             }
         }
+        }
+        cout<<"\n--------------------------------------------------------------------------------------------------------------\n\n";
+        // inputing processes request for a page.
+        cout<<"Enter a page number process want to access: ";
+        cin>>page_id;
     }
 
-    cout << "\nTotal Page Faults: " << page_fault_count << endl;
-
+    cout<<"\n--------------------------------------------------------------------------------------------------------------\nEND OF SIMULATION";
+    cout<<"\nTotal page access request: "<<page_hit+page_fault_count<<"\nHit count: "<<page_hit<<"\nTotal Page Faults: "<< page_fault_count<<'\n';
     return 0;
 }
