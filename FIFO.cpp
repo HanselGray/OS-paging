@@ -76,12 +76,39 @@ int main() {
                 oldest_frame->page_number = page;
                 oldest_frame->occupied = true;
 
-                cout << "Page " << page << " loaded into physical memory.\n";
+                cout << "Page " << page << " loaded into physical memory. Page Fault!\n";
+            }
+            else {
+                cout << "Page " << page << " is already in physical memory. No Page Fault.\n";
             }
         }
     }
 
     cout << "\nTotal Page Faults: " << page_faults << endl;
+
+    // Test section for process requesting access to a specific page
+    int test_process_id, test_page_number;
+    cout << "\nEnter the process ID for testing:\n";
+    cin >> test_process_id;
+
+    cout << "Enter the page number for testing:\n";
+    cin >> test_page_number;
+
+    // Simulate process access
+    bool page_fault_test = true;
+    for (auto& frame : physical_memory) {
+        if (frame.occupied && frame.page_number == test_page_number) {
+            page_fault_test = false;  // Page hit
+            break;
+        }
+    }
+
+    if (page_fault_test) {
+        cout << "Page " << test_page_number << " not in physical memory. Page Fault!\n";
+    }
+    else {
+        cout << "Page " << test_page_number << " is already in physical memory. No Page Fault.\n";
+    }
 
     return 0;
 }
