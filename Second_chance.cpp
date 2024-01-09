@@ -138,6 +138,7 @@ int main()
                 physical_memory[current_frame] = page_id;
 
                 // Update recency of pages
+                process.evict.erase(process.evict.begin());
 
 
                 cout<<"Memory full, swapping page: "<< evicted_id << " with page: "<< page_id << " at frame: " << current_frame << "\n";
