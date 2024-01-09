@@ -3,10 +3,14 @@
 #include <queue>
 #include <algorithm>
 #include <iomanip>
-#include<climits>
+
 using namespace std;
 
+const int FRAME_SIZE = 4;
+
 int page_fault_count = 0, n, maximum_no_frame, free_frame, page_hit = 0;
+
+
 
 struct Page
 {
@@ -17,8 +21,8 @@ struct Page
 
 struct Proc
 {
-    vector<Page> page_table;   
-    vector<int> evict; 
+    vector<Page> page_table;
+    int most_recent_page;
 };
 
 Proc swap_frame(Proc proc, int page_id_new, int page_id_old)
@@ -30,34 +34,11 @@ Proc swap_frame(Proc proc, int page_id_new, int page_id_old)
     return process;
 }
 
-Proc update_hit(Proc process, int hit_id){
-    ++process.evict[hit_id];            
-    return process;
-}
-
-Proc update_replace(Proc process, int page_id){
-    int min = INT_MAX,evict_id =0;
-    for(int i=0;i< process.evict.size();++i){
-        if(process.evict[i] < min && process.page_table[i].occupied){
-            evict_id = i;
-            min = process.evict[i];
-        } 
-    }
-    
-    process = swap_frame(process, page_id, evict_id);
-
-    int current_frame = process.page_table[page_id].frame_number;
-    cout<<"Memory full, swapping page: "<< evict_id << " with page: "<< page_id << " at frame: " << current_frame << "\n";
-
-    process.evict[evict_id] = 0;
-    return process;
-}
-
 void draw_frames(vector<int> physical_memory) {
     // Initialize the table
 
     int n = physical_memory.size();
-    cout<<"CURRENT PHYSICAL MEMORY STATE: \n\n";
+
     cout << "Frame no: ";
     for (int i = 0; i < n; ++i) {
         cout << "  " << setw(2) <<  i << "   ";
@@ -86,12 +67,10 @@ void draw_frames(vector<int> physical_memory) {
 int main()
 {   
     Proc process;
-  
     int no_of_pages;
-    cout<<"Enter the number of pages for the process:\n";
+    cout << "Enter the number of pages for the process:\n";
     cin >> no_of_pages;
-    //init evict to track frequency
-    process.evict.assign(no_of_pages,0);
+
     for (int j = 0; j < no_of_pages; ++j)
     {
         process.page_table.emplace_back(Page(false, -1));
@@ -104,29 +83,27 @@ int main()
 
     vector<int> physical_memory(maximum_no_frame, -1);
     draw_frames(physical_memory);
-    cout<<"BEGIN OF SIMULATION\n--------------------------------------------------------------------------------------------------------------\n\n";
+
+    cout<<"BEGIN OF SIMULATION\n*NOTE: an input of -1 means quitting the program\n--------------------------------------------------------------------------------------------------------------\n\n";
    
     int page_id;
-    cout<<"REQUEST NUMBER: "<<page_fault_count+page_hit+1<<"\nEnter a page number process want to access: ";
+    cout<<"Enter a page number process want to access: ";
     cin>>page_id;
+
     while(page_id != -1)
     {
-        //prevent accessing invalid section
+
+        // inputing processes request for a page.
         if(page_id >= process.page_table.size()) {
             cout <<  "Invalid reference.\n";
             draw_frames(physical_memory);
         }
-
-        else
-        {
+        else{
         // check if page is present inside of memory
         if (process.page_table[page_id].occupied)
         {
             ++page_hit;
-            
-            // Update recency of pages
-            process = update_hit(process, page_id);
-
+            process.most_recent_page = page_id;
             cout <<  "Page hit, page: " << page_id << " at frame " << process.page_table[page_id].frame_number<< ".\n";
             draw_frames(physical_memory);
         }
@@ -137,15 +114,18 @@ int main()
             ++page_fault_count;
             // if memory have no free frame, must swap
             if (free_frame <= 0)
-            {  
-                     
-                // Update recency of pages
-                process = update_replace(process, page_id);
+            {
 
-                int current_frame = process.page_table[page_id].frame_number;
-
+                int evicted_id = process.most_recent_page ;
+                int current_frame = process.page_table[evicted_id].frame_number;
+                
+                process = swap_frame(process, page_id, evicted_id); // U[date page table
+                
                 physical_memory[current_frame] = page_id;
                 
+                //Update most recent page
+                process.most_recent_page = page_id;
+                cout<<"Memory full, swapping page: "<< evicted_id << " with page: "<< page_id << " at frame: " << current_frame << "\n";
                 draw_frames(physical_memory);
             }
 
@@ -160,7 +140,10 @@ int main()
                         process.page_table[page_id].occupied = true;
                         process.page_table[page_id].frame_number = j;
                         physical_memory[j] = page_id; // indicate this frame has page with id = page_id
-                        process.evict[page_id] = 1;
+                        
+                        //Update most recent page
+                        process.most_recent_page = page_id;
+                        
                         --free_frame;
                         break;
                     }
@@ -172,13 +155,11 @@ int main()
         }
         cout<<"\n--------------------------------------------------------------------------------------------------------------\n\n";
         // inputing processes request for a page.
-        cout<<"REQUEST NUMBER: "<<page_fault_count+page_hit+1<<"\nEnter a page number process want to access: ";
+        cout<<"Enter a page number process want to access: ";
         cin>>page_id;
     }
 
-    // Print report
     cout<<"\n--------------------------------------------------------------------------------------------------------------\nEND OF SIMULATION";
     cout<<"\nTotal page access request: "<<page_hit+page_fault_count<<"\nHit count: "<<page_hit<<"\nTotal Page Faults: "<< page_fault_count<<'\n';
-
     return 0;
 }
